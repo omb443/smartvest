@@ -1,10 +1,11 @@
+# profile.py
+# collects investor information through a questionnaire and computes financial ratios
+
 from datetime import datetime
 
 
 def get_valid_int(prompt, min_value=None, max_value=None):
-    """
-    Ask the user for an integer input and validate it.
-    """
+    # keeps asking until the user enters a whole number within the allowed range
     while True:
         try:
             value = int(input(prompt))
@@ -20,9 +21,7 @@ def get_valid_int(prompt, min_value=None, max_value=None):
 
 
 def get_valid_float(prompt, min_value=None):
-    """
-    Ask the user for a decimal number input and validate it.
-    """
+    # same idea as get_valid_int but for decimal values like income and savings
     while True:
         try:
             value = float(input(prompt))
@@ -35,9 +34,8 @@ def get_valid_float(prompt, min_value=None):
 
 
 def get_valid_choice(prompt, choices):
-    """
-    Ask the user to choose one option from a list.
-    """
+    # loops until the user picks one of the accepted options
+    # comparison is case-insensitive so "Employed" and "employed" both work
     choices_lower = [choice.lower() for choice in choices]
     while True:
         try:

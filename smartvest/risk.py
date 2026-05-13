@@ -156,9 +156,7 @@ def calculate_risk_score(profile, ratios=None):
 
 
 def classify_risk(score):
-    """
-    Classify the investor into Conservative, Moderate, or Aggressive.
-    """
+    # thresholds: 0-35 conservative, 36-65 moderate, 66-100 aggressive
     try:
         if score is None:
             return "Unknown"
