@@ -51,8 +51,8 @@ def get_valid_choice(prompt, choices):
 
 def collect_user_profile():
     """
-    Collect investor information including employment status
-    and expanded investment goals.
+    Collect investor information with loss tolerance
+    behavioural question added in V3.
     """
     print("\nWelcome to SmartVest Investor Profile Setup")
     print("------------------------------------------")
@@ -60,7 +60,6 @@ def collect_user_profile():
     name = input("Enter your name: ").strip()
     age = get_valid_int("Enter your age: ", min_value=18, max_value=100)
 
-    # Employment status added in V2
     employment_status = get_valid_choice(
         "Enter your employment status (employed / self-employed / student / retired): ",
         ["employed", "self-employed", "student", "retired"]
@@ -73,7 +72,6 @@ def collect_user_profile():
         "Enter your investment time horizon in years: ", min_value=1, max_value=50
     )
 
-    # Expanded to 7 goals in V2
     goal = get_valid_choice(
         "Choose your main investment goal\n"
         "(retirement / home / education / wealth / emergency / travel / business): ",
@@ -83,6 +81,14 @@ def collect_user_profile():
     risk_comfort = get_valid_int(
         "On a scale of 1 to 5, how comfortable are you with investment risk? ",
         min_value=1, max_value=5
+    )
+
+    # Loss tolerance added in V3
+    loss_tolerance = get_valid_choice(
+        "\nIf your portfolio dropped 20%, what would you do?\n"
+        "  sell / hold / buy\n"
+        "Your choice: ",
+        ["sell", "hold", "buy"]
     )
 
     profile = {
@@ -95,6 +101,7 @@ def collect_user_profile():
         "investment_horizon": investment_horizon,
         "goal": goal,
         "risk_comfort": risk_comfort,
+        "loss_tolerance": loss_tolerance,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
@@ -117,6 +124,7 @@ def display_profile(profile):
         print(f"Investment Horizon : {profile['investment_horizon']} years")
         print(f"Investment Goal    : {profile['goal'].title()}")
         print(f"Risk Comfort Level : {profile['risk_comfort']} out of 5")
+        print(f"Loss Tolerance     : {profile['loss_tolerance'].title()}")
         print(f"Profile Created At : {profile['created_at']}")
     except KeyError as error:
         print("Profile is missing required information.")
