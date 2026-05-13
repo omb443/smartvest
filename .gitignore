@@ -7,4 +7,5 @@ venv/
 .venv/
 dist/
 build/
-*.egg-info/
+*.egg-info/*.png
+*_profile.csv
