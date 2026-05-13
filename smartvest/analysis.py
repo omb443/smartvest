@@ -144,21 +144,159 @@ def display_performance_metrics(metrics):
         print(f"Error displaying metrics: {error}")
 
 
+def plot_portfolio_allocation(allocation, risk_category, profile):
+    """
+    Plot a pie chart of the recommended portfolio allocation.
+    Saves to portfolio_allocation.png.
+    """
+    try:
+        labels = list(allocation.keys())
+        sizes = [v * 100 for v in allocation.values()]
+        colors = plt.cm.Set3.colors[:len(labels)]
+
+        fig, ax = plt.subplots(figsize=(9, 6))
+        wedges, texts, autotexts = ax.pie(
+            sizes, labels=None, autopct="%1.1f%%", colors=colors,
+            startangle=140, pctdistance=0.82,
+            wedgeprops=dict(edgecolor="white", linewidth=1.5)
+        )
+        for autotext in autotexts:
+            autotext.set_fontsize(9)
+            autotext.set_fontweight("bold")
+
+        ax.legend(
+            wedges,
+            [f"{l} ({s:.1f}%)" for l, s in zip(labels, sizes)],
+            title="Asset Classes", loc="center left",
+            bbox_to_anchor=(1, 0, 0.5, 1), fontsize=9
+        )
+        ax.set_title(
+            f"Recommended Portfolio Allocation\n"
+            f"{risk_category} Profile | Goal: {profile.get('goal', '').title()} | "
+            f"Horizon: {profile.get('investment_horizon', 0)} years",
+            fontsize=12, fontweight="bold", pad=15
+        )
+        plt.tight_layout()
+        plt.savefig("portfolio_allocation.png", dpi=150, bbox_inches="tight")
+        plt.show()
+        print("\nChart saved as 'portfolio_allocation.png'")
+
+    except Exception as error:
+        print(f"Error generating allocation chart: {error}")
+
+
+def plot_historical_performance(price_data, risk_category):
+    """
+    Plot normalised historical performance of recommended tickers.
+    Normalises all series to 100 at start for easy comparison.
+    Saves to historical_performance.png.
+    """
+    try:
+        if price_data.empty:
+            print("No price data for historical chart.")
+            return
+
+        normalised = (price_data / price_data.iloc[0]) * 100
+        fig, ax = plt.subplots(figsize=(12, 6))
+        colors = plt.cm.tab10.colors
+
+        for i, ticker in enumerate(normalised.columns):
+            ax.plot(
+                normalised.index, normalised[ticker],
+                label=ticker, color=colors[i % len(colors)], linewidth=2
+            )
+
+        ax.axhline(y=100, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
+        ax.set_title(
+            f"Historical Performance — {risk_category} Portfolio\n(Normalised to 100 at Start)",
+            fontsize=13, fontweight="bold"
+        )
+        ax.set_xlabel("Date", fontsize=11)
+        ax.set_ylabel("Normalised Price (Base = 100)", fontsize=11)
+        ax.legend(loc="upper left", fontsize=9)
+        ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig("historical_performance.png", dpi=150, bbox_inches="tight")
+        plt.show()
+        print("Chart saved as 'historical_performance.png'")
+
+    except Exception as error:
+        print(f"Error generating historical chart: {error}")
+
+
+def plot_projected_growth(profile, recommendations):
+    """
+    Plot projected portfolio growth showing base, best and worst case.
+    Saves to projected_growth.png.
+    """
+    try:
+        horizon = profile.get("investment_horizon", 10)
+        monthly = profile.get("monthly_investment", 0)
+        savings = profile.get("current_savings", 0)
+        risk_category = recommendations.get("risk_category", "Moderate")
+
+        expected_return = get_expected_return(risk_category)
+        best_case, worst_case = calculate_volatility_range(expected_return, risk_category)
+
+        years = list(range(0, horizon + 1))
+        base_values, best_values, worst_values = [], [], []
+
+        for y in years:
+            base = project_portfolio_growth(monthly, expected_return, y) + savings * ((1 + expected_return) ** y)
+            best = project_portfolio_growth(monthly, best_case, y) + savings * ((1 + best_case) ** y)
+            worst = project_portfolio_growth(monthly, worst_case, y) + savings * ((1 + worst_case) ** y)
+            base_values.append(base)
+            best_values.append(best)
+            worst_values.append(worst)
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(years, base_values, color="#2196F3", linewidth=2.5, label="Base Case", zorder=3)
+        ax.plot(years, best_values, color="#4CAF50", linewidth=1.5, linestyle="--", label="Best Case (+1σ)", zorder=2)
+        ax.plot(years, worst_values, color="#F44336", linewidth=1.5, linestyle="--", label="Worst Case (-1σ)", zorder=2)
+        ax.fill_between(years, worst_values, best_values, alpha=0.12, color="#2196F3", label="Projection Range")
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
+        ax.set_title(
+            f"Projected Portfolio Growth Over {horizon} Years\n"
+            f"Monthly Investment: ${monthly:,.0f} | Starting Savings: ${savings:,.0f}",
+            fontsize=13, fontweight="bold"
+        )
+        ax.set_xlabel("Years", fontsize=11)
+        ax.set_ylabel("Portfolio Value (USD)", fontsize=11)
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig("projected_growth.png", dpi=150, bbox_inches="tight")
+        plt.show()
+        print("Chart saved as 'projected_growth.png'")
+
+    except Exception as error:
+        print(f"Error generating projected growth chart: {error}")
+
+
 def run_analysis(profile, recommendations, risk_category):
     """
-    Run the analysis pipeline:
+    Run full analysis pipeline:
     1. Fetch live market data
     2. Calculate and display performance metrics
+    3. Generate all three charts
     """
     try:
         tickers = recommendations.get("tickers", [])
-        price_data = fetch_ticker_data(tickers, period="1y")
+        allocation = recommendations.get("allocation", {})
+        recommendations["risk_category"] = risk_category
 
+        price_data = fetch_ticker_data(tickers, period="1y")
         if not price_data.empty:
             metrics = calculate_performance_metrics(price_data)
             display_performance_metrics(metrics)
         else:
             print("\nSkipping live market analysis (data unavailable).")
+
+        print("\nGenerating charts...")
+        plot_portfolio_allocation(allocation, risk_category, profile)
+        if not price_data.empty:
+            plot_historical_performance(price_data, risk_category)
+        plot_projected_growth(profile, recommendations)
 
     except Exception as error:
         print(f"Error during analysis: {error}")
