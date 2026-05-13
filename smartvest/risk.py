@@ -1,10 +1,20 @@
-# risk.py
-# scores the investor from 0 to 100 and assigns a risk category
-
 def calculate_risk_score(profile, ratios=None):
-    # each factor adds points based on how much risk capacity it suggests
-    # age, income, savings, monthly investment, horizon, and self-rated comfort
-    # score is capped at 100 at the end
+    """
+    Calculate a comprehensive risk score from 0 to 100.
+
+    Scoring breakdown:
+    - Age factor           : up to 20 points
+    - Income factor        : up to 20 points
+    - Savings factor       : up to 15 points
+    - Monthly investment   : up to 10 points
+    - Investment horizon   : up to 15 points
+    - Risk comfort         : up to 15 points
+    - Loss tolerance       : up to 10 points
+    - Debt penalty         : up to -15 points (new in V5)
+    - Dependents penalty   : up to -10 points (new in V5)
+    - Emergency fund bonus : up to +5 points  (new in V5)
+    - Savings rate bonus   : up to +5 points  (new in V5)
+    """
     try:
         score = 0
 
@@ -17,7 +27,7 @@ def calculate_risk_score(profile, ratios=None):
         loss_tolerance = profile["loss_tolerance"]
         dependents = profile["dependents"]
 
-        # younger investors have more time to recover from a bad year
+        # Age score (max 20)
         if age < 30:
             score += 20
         elif age <= 45:
@@ -29,7 +39,7 @@ def calculate_risk_score(profile, ratios=None):
         else:
             score += 2
 
-        # higher income means losses hurt less relative to total earnings
+        # Income score (max 20)
         if annual_income >= 150000:
             score += 20
         elif annual_income >= 100000:
@@ -41,7 +51,7 @@ def calculate_risk_score(profile, ratios=None):
         else:
             score += 4
 
-        # larger savings base provides a cushion if investments drop
+        # Savings score (max 15)
         if current_savings >= 100000:
             score += 15
         elif current_savings >= 50000:
@@ -53,7 +63,7 @@ def calculate_risk_score(profile, ratios=None):
         else:
             score += 1
 
-        # higher monthly contribution shows financial discipline and capacity
+        # Monthly investment score (max 10)
         if monthly_investment >= 2000:
             score += 10
         elif monthly_investment >= 1000:
@@ -65,7 +75,7 @@ def calculate_risk_score(profile, ratios=None):
         else:
             score += 1
 
-        # longer horizon means more time for the portfolio to recover from dips
+        # Horizon score (max 15)
         if investment_horizon >= 20:
             score += 15
         elif investment_horizon >= 15:
@@ -79,10 +89,10 @@ def calculate_risk_score(profile, ratios=None):
         else:
             score += 1
 
-        # risk_comfort is 1 to 5, multiplied by 3 so it contributes up to 15 points
+        # Risk comfort score (max 15)
         score += risk_comfort * 3
 
-        # buy means willing to invest more during a crash, sell means panic selling
+        # Loss tolerance score (max 10)
         if loss_tolerance == "buy":
             score += 10
         elif loss_tolerance == "hold":
@@ -90,7 +100,7 @@ def calculate_risk_score(profile, ratios=None):
         elif loss_tolerance == "sell":
             score += 0
 
-        # debt penalty: high debt reduces financial flexibility
+        # Debt penalty (up to -15) — new in V5
         if ratios:
             dti = ratios.get("debt_to_income", 0)
             if dti >= 50:
@@ -102,7 +112,7 @@ def calculate_risk_score(profile, ratios=None):
             elif dti >= 10:
                 score -= 2
 
-        # more dependents means less room to take financial risks
+        # Dependents penalty (up to -10) — new in V5
         if dependents >= 4:
             score -= 10
         elif dependents == 3:
@@ -112,7 +122,7 @@ def calculate_risk_score(profile, ratios=None):
         elif dependents == 1:
             score -= 2
 
-        # having 6 months of expenses saved means you can afford to take more risk
+        # Emergency fund bonus (up to +5) — new in V5
         if ratios:
             efr = ratios.get("emergency_fund_ratio", 0)
             if efr >= 1.0:
@@ -120,7 +130,7 @@ def calculate_risk_score(profile, ratios=None):
             elif efr >= 0.5:
                 score += 2
 
-        # saving a high percentage of income signals discipline
+        # Savings rate bonus (up to +5) — new in V5
         if ratios:
             sr = ratios.get("savings_rate", 0)
             if sr >= 20:
@@ -163,7 +173,9 @@ def classify_risk(score):
 
 
 def display_risk_result(score, category, ratios=None):
-    # prints the score and a one-line explanation of what the category means
+    """
+    Display the final risk score, category and financial health indicators.
+    """
     try:
         print("\n" + "=" * 50)
         print("         Risk Assessment Result")
@@ -172,15 +184,15 @@ def display_risk_result(score, category, ratios=None):
         print(f"Risk Category : {category}")
 
         if category == "Conservative":
-            print("\nExplanation:")
+            print("\nProfile Explanation:")
             print("  Your profile indicates a preference for capital preservation.")
             print("  Best suited for lower-risk investments that prioritize stability.")
         elif category == "Moderate":
-            print("\nExplanation:")
+            print("\nProfile Explanation:")
             print("  Your profile indicates a balanced approach to investing.")
             print("  You can handle a mix of growth-oriented and stable assets.")
         elif category == "Aggressive":
-            print("\nExplanation:")
+            print("\nProfile Explanation:")
             print("  Your profile indicates a high capacity for investment risk.")
             print("  You are well-positioned to pursue growth-focused investments.")
         else:
@@ -192,13 +204,13 @@ def display_risk_result(score, category, ratios=None):
             efr = ratios.get("emergency_fund_ratio", 0)
             sr = ratios.get("savings_rate", 0)
 
-            dti_status = "Good" if dti < 20 else ("Manageable" if dti < 40 else "High - consider reducing debt")
-            efr_status = "Good" if efr >= 1.0 else ("Partial" if efr >= 0.5 else "Low - build emergency fund")
+            dti_status = "Good" if dti < 20 else ("Manageable" if dti < 40 else "High — consider reducing debt")
+            efr_status = "Good" if efr >= 1.0 else ("Partial" if efr >= 0.5 else "Low — build emergency fund")
             sr_status = "Excellent" if sr >= 20 else ("Good" if sr >= 10 else ("Fair" if sr >= 5 else "Low"))
 
-            print(f"  Debt-to-Income Ratio     : {dti}%  -> {dti_status}")
-            print(f"  Emergency Fund Coverage  : {efr}x  -> {efr_status}")
-            print(f"  Savings Rate             : {sr}%   -> {sr_status}")
+            print(f"  Debt-to-Income Ratio     : {dti}%  → {dti_status}")
+            print(f"  Emergency Fund Coverage  : {efr}x  → {efr_status}")
+            print(f"  Savings Rate             : {sr}%   → {sr_status}")
 
     except Exception as error:
         print("An unexpected error occurred while displaying risk results.")
