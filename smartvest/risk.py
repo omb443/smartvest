@@ -1,10 +1,10 @@
-def calculate_risk_score(profile):
-    """
-    Calculate a risk score from 0 to 100 based on the investor profile.
+# risk.py
+# scores the investor from 0 to 100 and assigns a risk category
 
-    Higher score means the investor can take more risk.
-    Lower score means the investor should stay more conservative.
-    """
+def calculate_risk_score(profile):
+    # each factor adds points based on how much risk capacity it suggests
+    # age, income, savings, monthly investment, horizon, and self-rated comfort
+    # score is capped at 100 at the end
     try:
         score = 0
 
@@ -15,7 +15,7 @@ def calculate_risk_score(profile):
         investment_horizon = profile["investment_horizon"]
         risk_comfort = profile["risk_comfort"]
 
-        # Age score: younger investors usually have more time to recover from losses
+        # younger investors have more time to recover from a bad year
         if age < 30:
             score += 20
         elif age <= 45:
@@ -25,7 +25,7 @@ def calculate_risk_score(profile):
         else:
             score += 5
 
-        # Income score: higher income can support more investment risk
+        # higher income means losses hurt less relative to total earnings
         if annual_income >= 100000:
             score += 20
         elif annual_income >= 60000:
@@ -35,7 +35,7 @@ def calculate_risk_score(profile):
         else:
             score += 5
 
-        # Savings score: more savings can provide a stronger financial base
+        # larger savings base provides a cushion if investments drop
         if current_savings >= 50000:
             score += 15
         elif current_savings >= 20000:
@@ -45,7 +45,7 @@ def calculate_risk_score(profile):
         else:
             score += 2
 
-        # Monthly investment score
+        # higher monthly contribution shows financial discipline and capacity
         if monthly_investment >= 1000:
             score += 15
         elif monthly_investment >= 500:
@@ -55,7 +55,7 @@ def calculate_risk_score(profile):
         else:
             score += 2
 
-        # Investment horizon score: longer time horizon allows more risk
+        # longer horizon means more time for the portfolio to recover from dips
         if investment_horizon >= 15:
             score += 15
         elif investment_horizon >= 7:
@@ -65,10 +65,9 @@ def calculate_risk_score(profile):
         else:
             score += 2
 
-        # Risk comfort score: user's own comfort level matters a lot
+        # risk_comfort is 1 to 5, multiplied by 3 so it contributes up to 15 points
         score += risk_comfort * 3
 
-        # Make sure score does not go above 100
         if score > 100:
             score = 100
 
@@ -90,9 +89,7 @@ def calculate_risk_score(profile):
 
 
 def classify_risk(score):
-    """
-    Classify the investor into Conservative, Moderate, or Aggressive.
-    """
+    # thresholds: 0-30 conservative, 31-60 moderate, 61-100 aggressive
     try:
         if score is None:
             return "Unknown"
@@ -111,9 +108,7 @@ def classify_risk(score):
 
 
 def display_risk_result(score, category):
-    """
-    Display the final risk score and category.
-    """
+    # prints the score and a one-line explanation of what the category means
     try:
         print("\nRisk Assessment Result")
         print("----------------------")

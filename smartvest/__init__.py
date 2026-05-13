@@ -1,12 +1,12 @@
 """
 SmartVest — Personalized Investment Advisory Package
-=====================================================
+
 Modules:
-    profile        - Investor profiling and financial ratio computation
-    risk           - Risk scoring and classification engine
-    recommendation - Portfolio recommendations and growth projections
-    analysis       - yFinance data fetching and matplotlib visualisations
-    storage        - CSV-based profile saving and loading
+    profile - Investor profiling and financial ratio computation
+    risk - Risk scoring and classification engine
+    recommendation -Portfolio recommendations and growth projections
+    analysis - yFinance data fetching and matplotlib visualisations
+    storage - CSV-based profile saving and loading
 """
 
 from smartvest.profile import collect_user_profile, compute_financial_ratios, display_profile

@@ -1,3 +1,6 @@
+# analysis.py
+# fetches live market data via yfinance and generates three matplotlib charts
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,17 +19,9 @@ except ImportError:
 
 
 def fetch_ticker_data(tickers, period="1y"):
-    """
-    Fetch historical adjusted closing prices for a list of tickers
-    using yfinance.
-
-    Parameters:
-        tickers (list): Ticker symbols e.g. ["SPY", "QQQ"]
-        period (str)  : Time period e.g. "1y", "3y", "5y"
-
-    Returns:
-        pd.DataFrame: Adjusted closing prices or empty DataFrame on failure.
-    """
+    # downloads adjusted closing prices for the given tickers
+    # yfinance returns a MultiIndex when you pass multiple tickers
+    # and a flat DataFrame for a single ticker, so we handle both cases
     if not YFINANCE_AVAILABLE:
         print("yfinance not available. Skipping market data fetch.")
         return pd.DataFrame()
@@ -46,6 +41,7 @@ def fetch_ticker_data(tickers, period="1y"):
         if isinstance(data.columns, pd.MultiIndex):
             close_data = data["Close"]
         else:
+            # single ticker comes back as a flat DataFrame
             close_data = data[["Close"]]
             close_data.columns = tickers
 
@@ -59,16 +55,10 @@ def fetch_ticker_data(tickers, period="1y"):
 
 
 def calculate_performance_metrics(price_data):
-    """
-    Calculate performance metrics for each ticker.
-
-    Metrics:
-    - Total Return (%)      : (Last - First) / First * 100
-    - Annualised Return (%) : Geometric annualised return
-    - Volatility (%)        : Annualised standard deviation of daily returns
-    - Sharpe Ratio          : (Ann. Return - Risk Free Rate) / Volatility
-                              Risk-free rate = 4.5% (approx T-bill rate)
-    """
+    # calculates four metrics for each ticker:
+    # total return, annualised return, volatility, and Sharpe Ratio
+    # risk-free rate is set to 4.5% (approximate 3-month T-bill rate)
+    # 252 trading days used to annualise daily standard deviation
     try:
         if price_data.empty:
             return {}
@@ -111,9 +101,7 @@ def calculate_performance_metrics(price_data):
 
 
 def display_performance_metrics(metrics):
-    """
-    Display performance metrics in a formatted table.
-    """
+    # prints a formatted table of all ticker metrics
     try:
         if not metrics:
             print("No performance metrics to display.")
@@ -145,10 +133,9 @@ def display_performance_metrics(metrics):
 
 
 def plot_portfolio_allocation(allocation, risk_category, profile):
-    """
-    Plot a pie chart of the recommended portfolio allocation.
-    Saves to portfolio_allocation.png.
-    """
+    # pie chart showing how the portfolio is split across asset classes
+    # legend sits to the right so the labels do not overlap the slices
+    # saved as a PNG so the user has a copy after the session ends
     try:
         labels = list(allocation.keys())
         sizes = [v * 100 for v in allocation.values()]
@@ -186,11 +173,9 @@ def plot_portfolio_allocation(allocation, risk_category, profile):
 
 
 def plot_historical_performance(price_data, risk_category):
-    """
-    Plot normalised historical performance of recommended tickers.
-    Normalises all series to 100 at start for easy comparison.
-    Saves to historical_performance.png.
-    """
+    # normalises all tickers to 100 at the start date
+    # so you can compare performance regardless of price differences
+    # e.g. SPY at $500 and TLT at $90 become directly comparable
     try:
         if price_data.empty:
             print("No price data for historical chart.")
@@ -206,9 +191,10 @@ def plot_historical_performance(price_data, risk_category):
                 label=ticker, color=colors[i % len(colors)], linewidth=2
             )
 
+        # dashed line at 100 shows the starting point for reference
         ax.axhline(y=100, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
         ax.set_title(
-            f"Historical Performance — {risk_category} Portfolio\n(Normalised to 100 at Start)",
+            f"Historical Performance - {risk_category} Portfolio\n(Normalised to 100 at Start)",
             fontsize=13, fontweight="bold"
         )
         ax.set_xlabel("Date", fontsize=11)
@@ -225,10 +211,9 @@ def plot_historical_performance(price_data, risk_category):
 
 
 def plot_projected_growth(profile, recommendations):
-    """
-    Plot projected portfolio growth showing base, best and worst case.
-    Saves to projected_growth.png.
-    """
+    # plots three lines: base case, best case, and worst case
+    # best and worst are +/- one standard deviation from the expected return
+    # the shaded area between them shows the realistic range of outcomes
     try:
         horizon = profile.get("investment_horizon", 10)
         monthly = profile.get("monthly_investment", 0)
@@ -251,8 +236,8 @@ def plot_projected_growth(profile, recommendations):
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(years, base_values, color="#2196F3", linewidth=2.5, label="Base Case", zorder=3)
-        ax.plot(years, best_values, color="#4CAF50", linewidth=1.5, linestyle="--", label="Best Case (+1σ)", zorder=2)
-        ax.plot(years, worst_values, color="#F44336", linewidth=1.5, linestyle="--", label="Worst Case (-1σ)", zorder=2)
+        ax.plot(years, best_values, color="#4CAF50", linewidth=1.5, linestyle="--", label="Best Case (+1s)", zorder=2)
+        ax.plot(years, worst_values, color="#F44336", linewidth=1.5, linestyle="--", label="Worst Case (-1s)", zorder=2)
         ax.fill_between(years, worst_values, best_values, alpha=0.12, color="#2196F3", label="Projection Range")
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
         ax.set_title(
@@ -274,12 +259,8 @@ def plot_projected_growth(profile, recommendations):
 
 
 def run_analysis(profile, recommendations, risk_category):
-    """
-    Run full analysis pipeline:
-    1. Fetch live market data
-    2. Calculate and display performance metrics
-    3. Generate all three charts
-    """
+    # entry point called from main.py
+    # fetches data, prints the metrics table, then draws all three charts
     try:
         tickers = recommendations.get("tickers", [])
         allocation = recommendations.get("allocation", {})

@@ -1,3 +1,6 @@
+# storage.py
+# saves each session to a CSV file and loads past profiles on request
+
 import csv
 import os
 from datetime import datetime
@@ -5,6 +8,7 @@ from datetime import datetime
 
 PROFILES_FILE = "investor_profiles.csv"
 
+# all fields written to the CSV, in the order they appear as column headers
 FIELDNAMES = [
     "name", "age", "employment_status", "annual_income", "monthly_expenses",
     "current_savings", "monthly_investment", "existing_debt", "dependents",
@@ -14,10 +18,8 @@ FIELDNAMES = [
 
 
 def save_profile(profile, risk_score, risk_category, projected_value):
-    """
-    Save investor profile and results to a CSV file.
-    Appends a new row each session so all history is preserved.
-    """
+    # opens the file in append mode so previous sessions are never overwritten
+    # writes the header only on the first run when the file does not exist yet
     try:
         file_exists = os.path.isfile(PROFILES_FILE)
 
@@ -57,12 +59,8 @@ def save_profile(profile, risk_score, risk_category, projected_value):
 
 
 def load_profiles():
-    """
-    Load all previously saved investor profiles from CSV.
-
-    Returns:
-        list: List of profile dictionaries, empty list if file not found.
-    """
+    # reads all rows from the CSV and returns them as a list of dictionaries
+    # returns an empty list if the file does not exist yet
     try:
         if not os.path.isfile(PROFILES_FILE):
             print(f"No saved profiles found.")
@@ -86,9 +84,8 @@ def load_profiles():
 
 
 def display_saved_profiles():
-    """
-    Display all previously saved investor profiles in a summary table.
-    """
+    # prints a summary table of all past sessions
+    # skips any row where projected_value cannot be converted to a float
     try:
         profiles = load_profiles()
         if not profiles:

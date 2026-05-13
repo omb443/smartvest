@@ -1,4 +1,8 @@
-# Portfolio allocations per risk category
+# recommendation.py
+# maps risk category and investment goal to portfolio allocations and growth projections
+
+# allocations are fixed weights per risk category
+# tickers are used by analysis.py to fetch live market data
 PORTFOLIO_ALLOCATIONS = {
     "Conservative": {
         "Government Bonds (TLT)": 0.35,
@@ -29,7 +33,7 @@ PORTFOLIO_TICKERS = {
     "Aggressive": ["QQQ", "VB", "EEM", "SPY", "XLK"]
 }
 
-# Extended to 7 goals in V3
+# one short paragraph of advice per goal, shown at the end of recommendations
 GOAL_NOTES = {
     "retirement": (
         "For retirement, consistency and compounding are key. "
@@ -65,10 +69,8 @@ GOAL_NOTES = {
 
 
 def get_expected_return(risk_category):
-    """
-    Return expected annual return rate based on risk category.
-    Based on historical long-term averages.
-    """
+    # based on long-term historical averages for each portfolio type
+    # conservative is bond-heavy so lower, aggressive is equity-heavy so higher
     return_rates = {
         "Conservative": 0.045,
         "Moderate": 0.075,
@@ -78,15 +80,8 @@ def get_expected_return(risk_category):
 
 
 def calculate_volatility_range(expected_return, risk_category):
-    """
-    Calculate best-case and worst-case return range using
-    +/- 1 standard deviation based on risk category.
-
-    Standard deviations used:
-        Conservative : 5%
-        Moderate     : 10%
-        Aggressive   : 18%
-    """
+    # adds and subtracts one standard deviation to get best and worst case returns
+    # standard deviations are based on typical portfolio volatility for each risk level
     std_devs = {
         "Conservative": 0.05,
         "Moderate": 0.10,
@@ -97,16 +92,10 @@ def calculate_volatility_range(expected_return, risk_category):
 
 
 def project_portfolio_growth(monthly_investment, annual_return_rate, years):
-    """
-    Project future portfolio value using compound interest formula
-    with monthly contributions.
-
-    Formula: FV = P * [((1 + r)^n - 1) / r]
-    Where:
-        P = monthly investment
-        r = monthly return rate (annual rate / 12)
-        n = total number of months
-    """
+    # standard compound interest formula with monthly contributions
+    # FV = P * [((1 + r)^n - 1) / r]
+    # where r is the monthly rate and n is total months
+    # current savings are compounded separately in get_recommendations
     try:
         if years <= 0 or monthly_investment < 0:
             return 0
@@ -129,9 +118,8 @@ def project_portfolio_growth(monthly_investment, annual_return_rate, years):
 
 
 def get_recommendations(risk_category, goal, profile):
-    """
-    Generate investment recommendations with best/worst case projections.
-    """
+    # pulls together allocation, tickers, goal advice, and all three projection scenarios
+    # current savings are compounded as a lump sum on top of the monthly contribution projection
     try:
         allocation = PORTFOLIO_ALLOCATIONS.get(risk_category, {})
         tickers = PORTFOLIO_TICKERS.get(risk_category, [])
@@ -175,10 +163,7 @@ def get_recommendations(risk_category, goal, profile):
 
 
 def display_recommendations(recommendations, profile, risk_category):
-    """
-    Display portfolio allocation, goal advice, monthly breakdown
-    and best/worst case projections.
-    """
+    # prints allocation with a simple bar chart, goal advice, projections, and monthly breakdown
     try:
         if not recommendations:
             print("No recommendations available.")
