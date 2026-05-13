@@ -48,8 +48,11 @@ def get_valid_choice(prompt, choices):
 
 
 def collect_user_profile():
-    # walks the user through the full questionnaire
-    # every field is validated before being stored in the profile dictionary
+    """
+    Collect comprehensive investor information including
+    monthly expenses, existing debt and dependents
+    for financial ratio computation added in V4.
+    """
     print("\n" + "=" * 50)
     print("   Welcome to SmartVest - Investor Profile Setup")
     print("=" * 50)
@@ -62,24 +65,21 @@ def collect_user_profile():
         ["employed", "self-employed", "student", "retired"]
     )
 
-    annual_income = get_valid_float(
-        "Enter your gross annual income (before tax): $", min_value=0
-    )
+    annual_income = get_valid_float("Enter your gross annual income (before tax): $", min_value=0)
 
-    # monthly expenses and debt are needed to compute financial ratios
+    # New fields added in V4
     monthly_expenses = get_valid_float(
         "Enter your total monthly expenses (rent, food, bills, etc.): $", min_value=0
     )
     current_savings = get_valid_float("Enter your current total savings: $", min_value=0)
-    monthly_investment = get_valid_float(
-        "Enter how much you can invest monthly: $", min_value=0
-    )
+    monthly_investment = get_valid_float("Enter how much you can invest monthly: $", min_value=0)
     existing_debt = get_valid_float(
         "Enter your total existing debt (student loans, credit cards, etc.): $", min_value=0
     )
     dependents = get_valid_int(
         "How many financial dependents do you have? ", min_value=0, max_value=20
     )
+
     investment_horizon = get_valid_int(
         "Enter your investment time horizon in years: ", min_value=1, max_value=50
     )
@@ -95,7 +95,6 @@ def collect_user_profile():
         min_value=1, max_value=5
     )
 
-    # loss tolerance captures how the user behaves when markets drop
     loss_tolerance = get_valid_choice(
         "\nIf your portfolio dropped 20%, what would you do?\n"
         "  sell / hold / buy\n"
@@ -124,11 +123,15 @@ def collect_user_profile():
 
 
 def compute_financial_ratios(profile):
-    # four ratios that measure financial health
-    # savings rate: how much of monthly income goes toward investing
-    # debt to income: total debt as a percentage of annual income
-    # emergency fund: how many months of expenses are covered by savings
-    # investment capacity: monthly investment as a percentage of monthly expenses
+    """
+    Compute key financial ratios from the user profile.
+
+    Ratios calculated in V4:
+    - Savings Rate        : (monthly_investment / monthly_income) * 100
+    - Debt-to-Income      : (existing_debt / annual_income) * 100
+    - Emergency Fund Ratio: current_savings / (monthly_expenses * 6)
+    - Investment Capacity : (monthly_investment / monthly_expenses) * 100
+    """
     try:
         monthly_income = profile["annual_income"] / 12 if profile["annual_income"] > 0 else 1
 
@@ -169,7 +172,9 @@ def compute_financial_ratios(profile):
 
 
 def display_profile(profile, ratios=None):
-    # prints the full profile and optionally the financial ratios if they were computed
+    """
+    Display the user profile and computed financial ratios.
+    """
     try:
         print("\n" + "=" * 50)
         print("         Investor Profile Summary")
