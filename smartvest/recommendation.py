@@ -23,11 +23,31 @@ PORTFOLIO_ALLOCATIONS = {
     }
 }
 
-# Ticker symbols for each risk category
 PORTFOLIO_TICKERS = {
     "Conservative": ["TLT", "LQD", "VYM", "SPY"],
     "Moderate": ["SPY", "VEA", "VNQ", "LQD", "VYM"],
     "Aggressive": ["QQQ", "VB", "EEM", "SPY", "XLK"]
+}
+
+# Goal-specific advice added in V2
+GOAL_NOTES = {
+    "retirement": (
+        "For retirement, consistency and compounding are key. "
+        "Maximize tax-advantaged accounts like 401(k) and IRA where possible. "
+        "Gradually shift toward conservative allocations as you near retirement."
+    ),
+    "home": (
+        "For a home purchase, prioritize liquidity and capital preservation. "
+        "Avoid high-volatility assets if your horizon is under 5 years."
+    ),
+    "education": (
+        "For education funding, align your horizon with when tuition is needed. "
+        "Shift to conservative assets 2-3 years before the start date."
+    ),
+    "wealth": (
+        "For wealth building, diversification is essential. "
+        "Focus on low-cost index funds and reinvest dividends automatically."
+    )
 }
 
 
@@ -78,12 +98,14 @@ def project_portfolio_growth(monthly_investment, annual_return_rate, years):
 
 def get_recommendations(risk_category, goal, profile):
     """
-    Generate basic investment recommendations based on risk category.
-    Returns allocation, tickers and projected portfolio value.
+    Generate investment recommendations with goal-specific advice.
     """
     try:
         allocation = PORTFOLIO_ALLOCATIONS.get(risk_category, {})
         tickers = PORTFOLIO_TICKERS.get(risk_category, [])
+        goal_note = GOAL_NOTES.get(
+            goal, "Focus on building a diversified portfolio aligned with your goals."
+        )
         expected_return = get_expected_return(risk_category)
         horizon = profile.get("investment_horizon", 10)
         monthly_investment = profile.get("monthly_investment", 0)
@@ -97,6 +119,7 @@ def get_recommendations(risk_category, goal, profile):
         return {
             "allocation": allocation,
             "tickers": tickers,
+            "goal_note": goal_note,
             "expected_return": expected_return,
             "projected_value": round(projected_value, 2),
             "horizon": horizon
@@ -109,7 +132,7 @@ def get_recommendations(risk_category, goal, profile):
 
 def display_recommendations(recommendations, profile, risk_category):
     """
-    Display portfolio allocation and basic projected growth.
+    Display portfolio allocation, goal advice and monthly breakdown.
     """
     try:
         if not recommendations:
@@ -120,15 +143,26 @@ def display_recommendations(recommendations, profile, risk_category):
         print("      Investment Recommendations")
         print("=" * 50)
         print(f"Risk Profile : {risk_category}")
+        print(f"Goal         : {profile.get('goal', 'N/A').title()}")
         print(f"Horizon      : {recommendations['horizon']} years")
 
         print("\n--- Recommended Portfolio Allocation ---")
         for asset, weight in recommendations.get("allocation", {}).items():
-            print(f"  {asset:<35} {weight*100:>5.1f}%")
+            bar = "█" * int(weight * 40)
+            print(f"  {asset:<35} {weight*100:>5.1f}%  {bar}")
+
+        print("\n--- Goal-Specific Advice ---")
+        print(f"  {recommendations.get('goal_note', '')}")
 
         print("\n--- Projected Portfolio Growth ---")
         print(f"  Expected Annual Return : ~{recommendations.get('expected_return', 0)*100:.1f}%")
         print(f"  Projected Value        : ${recommendations.get('projected_value', 0):>15,.2f}")
+
+        # Monthly breakdown added in V2
+        print("\n--- Monthly Investment Breakdown ---")
+        monthly = profile.get("monthly_investment", 0)
+        for asset, weight in recommendations.get("allocation", {}).items():
+            print(f"  {asset:<35} ${monthly * weight:>8,.2f}/month")
 
         print("\n" + "=" * 50)
         print("  DISCLAIMER: Educational projections only.")
