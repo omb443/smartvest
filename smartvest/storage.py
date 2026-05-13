@@ -1,14 +1,12 @@
 # storage.py
-# saves each session to a CSV file and loads past profiles on request
+# saves each session to a CSV file named after the investor
+# each investor gets their own file so sessions never mix
 
 import csv
 import os
 from datetime import datetime
 
 
-PROFILES_FILE = "investor_profiles.csv"
-
-# all fields written to the CSV, in the order they appear as column headers
 FIELDNAMES = [
     "name", "age", "employment_status", "annual_income", "monthly_expenses",
     "current_savings", "monthly_investment", "existing_debt", "dependents",
@@ -17,13 +15,21 @@ FIELDNAMES = [
 ]
 
 
+def get_profile_filename(profile):
+    # builds a filename from the investor's name
+    # spaces replaced with underscores so the filename is valid on all systems
+    name = profile.get("name", "investor").replace(" ", "_")
+    return f"{name}_profile.csv"
+
+
 def save_profile(profile, risk_score, risk_category, projected_value):
     # opens the file in append mode so previous sessions are never overwritten
     # writes the header only on the first run when the file does not exist yet
     try:
-        file_exists = os.path.isfile(PROFILES_FILE)
+        filename = get_profile_filename(profile)
+        file_exists = os.path.isfile(filename)
 
-        with open(PROFILES_FILE, mode="a", newline="") as csvfile:
+        with open(filename, mode="a", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
             if not file_exists:
                 writer.writeheader()
@@ -48,10 +54,10 @@ def save_profile(profile, risk_score, risk_category, projected_value):
                 "created_at": profile.get("created_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             })
 
-        print(f"\nProfile saved to '{PROFILES_FILE}'")
+        print(f"\nProfile saved to '{filename}'")
 
     except PermissionError:
-        print(f"Error: Permission denied writing to '{PROFILES_FILE}'.")
+        print(f"Error: Permission denied writing to the profile file.")
     except IOError as error:
         print(f"Error saving profile: {error}")
     except Exception as error:
@@ -59,18 +65,21 @@ def save_profile(profile, risk_score, risk_category, projected_value):
 
 
 def load_profiles():
-    # reads all rows from the CSV and returns them as a list of dictionaries
-    # returns an empty list if the file does not exist yet
+    # finds all CSV files ending in _profile.csv in the current folder
+    # reads all of them and returns every row as a list of dictionaries
     try:
-        if not os.path.isfile(PROFILES_FILE):
-            print(f"No saved profiles found.")
+        csv_files = [f for f in os.listdir(".") if f.endswith("_profile.csv")]
+
+        if not csv_files:
+            print("No saved profiles found.")
             return []
 
         profiles = []
-        with open(PROFILES_FILE, mode="r", newline="") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                profiles.append(row)
+        for csv_file in sorted(csv_files):
+            with open(csv_file, mode="r", newline="") as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    profiles.append(row)
 
         print(f"Loaded {len(profiles)} saved profile(s).")
         return profiles
@@ -84,7 +93,7 @@ def load_profiles():
 
 
 def display_saved_profiles():
-    # prints a summary table of all past sessions
+    # prints a summary table of all past sessions across all investors
     # skips any row where projected_value cannot be converted to a float
     try:
         profiles = load_profiles()

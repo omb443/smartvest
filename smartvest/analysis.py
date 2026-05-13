@@ -1,5 +1,6 @@
 # analysis.py
 # fetches live market data via yfinance and generates three matplotlib charts
+# each chart is saved with the investor's name in the filename
 
 import numpy as np
 import pandas as pd
@@ -135,7 +136,7 @@ def display_performance_metrics(metrics):
 def plot_portfolio_allocation(allocation, risk_category, profile):
     # pie chart showing how the portfolio is split across asset classes
     # legend sits to the right so the labels do not overlap the slices
-    # saved as a PNG so the user has a copy after the session ends
+    # saved with the investor's name so each profile has its own chart
     try:
         labels = list(allocation.keys())
         sizes = [v * 100 for v in allocation.values()]
@@ -164,15 +165,17 @@ def plot_portfolio_allocation(allocation, risk_category, profile):
             fontsize=12, fontweight="bold", pad=15
         )
         plt.tight_layout()
-        plt.savefig("portfolio_allocation.png", dpi=150, bbox_inches="tight")
+        name = profile.get("name", "investor").replace(" ", "_")
+        filename = f"{name}_portfolio_allocation.png"
+        plt.savefig(filename, dpi=150, bbox_inches="tight")
         plt.show()
-        print("\nChart saved as 'portfolio_allocation.png'")
+        print(f"\nChart saved as '{filename}'")
 
     except Exception as error:
         print(f"Error generating allocation chart: {error}")
 
 
-def plot_historical_performance(price_data, risk_category):
+def plot_historical_performance(price_data, risk_category, profile):
     # normalises all tickers to 100 at the start date
     # so you can compare performance regardless of price differences
     # e.g. SPY at $500 and TLT at $90 become directly comparable
@@ -202,9 +205,11 @@ def plot_historical_performance(price_data, risk_category):
         ax.legend(loc="upper left", fontsize=9)
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig("historical_performance.png", dpi=150, bbox_inches="tight")
+        name = profile.get("name", "investor").replace(" ", "_")
+        filename = f"{name}_historical_performance.png"
+        plt.savefig(filename, dpi=150, bbox_inches="tight")
         plt.show()
-        print("Chart saved as 'historical_performance.png'")
+        print(f"Chart saved as '{filename}'")
 
     except Exception as error:
         print(f"Error generating historical chart: {error}")
@@ -242,7 +247,7 @@ def plot_projected_growth(profile, recommendations):
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
         ax.set_title(
             f"Projected Portfolio Growth Over {horizon} Years\n"
-            f"Monthly Investment: ${monthly:,.0f} | Starting Savings: ${savings:,.0f}",
+            f"Monthly Investment: ${monthly:,.0f}   |   Starting Savings: ${savings:,.0f}",
             fontsize=13, fontweight="bold"
         )
         ax.set_xlabel("Years", fontsize=11)
@@ -250,9 +255,11 @@ def plot_projected_growth(profile, recommendations):
         ax.legend(fontsize=10)
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig("projected_growth.png", dpi=150, bbox_inches="tight")
+        name = profile.get("name", "investor").replace(" ", "_")
+        filename = f"{name}_projected_growth.png"
+        plt.savefig(filename, dpi=150, bbox_inches="tight")
         plt.show()
-        print("Chart saved as 'projected_growth.png'")
+        print(f"Chart saved as '{filename}'")
 
     except Exception as error:
         print(f"Error generating projected growth chart: {error}")
@@ -276,7 +283,7 @@ def run_analysis(profile, recommendations, risk_category):
         print("\nGenerating charts...")
         plot_portfolio_allocation(allocation, risk_category, profile)
         if not price_data.empty:
-            plot_historical_performance(price_data, risk_category)
+            plot_historical_performance(price_data, risk_category, profile)
         plot_projected_growth(profile, recommendations)
 
     except Exception as error:
